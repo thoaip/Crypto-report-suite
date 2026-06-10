@@ -1,0 +1,36 @@
+name: BTC Bottom-Signal Alert
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # every 30 minutes
+  workflow_dispatch:
+
+# Avoid overlapping runs
+concurrency:
+  group: btc-alert
+  cancel-in-progress: false
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # to commit alert-state.json back
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Run alert
+        run: node alert.js BTC
+        env:
+          CAS_EXCHANGE: okx
+          CAS_TELEGRAM_TOKEN: ${{ secrets.CAS_TELEGRAM_TOKEN }}
+          CAS_TELEGRAM_CHAT_ID: ${{ secrets.CAS_TELEGRAM_CHAT_ID }}
+      - name: Persist alert state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add alert-state.json 2>/dev/null || true
+          git commit -m "chore: update alert state [skip ci]" || echo "no state change"
+          git push || echo "nothing to push"

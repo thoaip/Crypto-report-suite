@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "crypto-analytics-suite": {
+      "command": "node",
+      "args": [
+        "~/.claude/mcp-servers/crypto-analytics-suite/mcp-server.js"
+      ],
+      "description": "Unified Crypto Analytics Suite - 50+ Indicators, 6 Crypto Skills, 28 Trading Skills, 4 Investment Analysis Tools for BTC & Crypto Trading"
+    }
+  }
+}

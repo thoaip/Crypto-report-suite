@@ -1,0 +1,54 @@
+{
+  "global": {
+    "Trend": 2,
+    "Momentum": 1.5,
+    "Ichimoku": 1.5,
+    "Patterns": 1.5,
+    "SMC": 1.5,
+    "ETFFlow": 1.2,
+    "Volume": 1,
+    "Sentiment": 1,
+    "MeanReversion": 0.8,
+    "Derivatives": 0.7,
+    "Macro": 0.5
+  },
+  "byTimeframe": {
+    "1d": {
+      "Trend": 2.24,
+      "Momentum": 1.54,
+      "Ichimoku": 1.25,
+      "Volume": 1.01,
+      "MeanReversion": 0.88,
+      "Patterns": 1.8,
+      "Sentiment": 1,
+      "Derivatives": 0.7,
+      "Macro": 0.5,
+      "SMC": 1.54,
+      "ETFFlow": 1.2
+    },
+    "4h": {
+      "Trend": 2.47,
+      "Momentum": 1.39,
+      "Ichimoku": 1.94,
+      "Volume": 0.91,
+      "MeanReversion": 0.63,
+      "Patterns": 1.85,
+      "Sentiment": 1,
+      "Derivatives": 0.7,
+      "Macro": 0.5,
+      "SMC": 1.53,
+      "ETFFlow": 1.2
+    }
+  },
+  "meta": {
+    "tunedAt": "unknown",
+    "symbols": [
+      "BTC",
+      "ETH",
+      "SOL"
+    ],
+    "timeframe": "4h",
+    "horizon": 12,
+    "method": "aggregated accuracy across symbols, weight=default×(1+edge/25) clamp 0.4–1.6"
+  }
+}
