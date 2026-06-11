@@ -44,7 +44,7 @@ async function send(token, chatId, text) {
   const getTf = async (x, lim = 300) => {
     try {
       const o = await ds.getOHLCV(sym, x, lim);
-      return { highs: o.highs, lows: o.lows, closes: o.closes };
+      return { opens: o.opens, highs: o.highs, lows: o.lows, closes: o.closes };
     } catch (e) {
       console.error(`tf ${x} skipped:`, e.message);
       return null;
@@ -73,6 +73,22 @@ async function send(token, chatId, text) {
     if (cp.gap >= 30) active["cbprem_bull"] = `🟢 Coinbase Premium +${f1(cp.gap)} → tổ chức Mỹ GOM (đảo chiều TĂNG)`;
     else if (cp.gap <= -30) active["cbprem_bear"] = `🔴 Coinbase Premium ${f1(cp.gap)} → XẢ (đảo chiều GIẢM)`;
   }
+
+  // ICT Killzone signal (1h entry, optimized params from kz-config.json)
+  try {
+    const kz = require("./lib/killzone");
+    const o1h = await getTf("1h", 200);
+    if (o1h) {
+      const sig = kz.killzoneSignal(o1h, { params: kz.loadParams() });
+      if (sig.active) {
+        const ic = sig.direction === "LONG" ? "🟢" : "🔴";
+        const tp = sig.takeProfit;
+        active["kz_" + sig.direction.toLowerCase()] =
+          `${ic} <b>KILLZONE ${sig.direction}</b> (${sig.killzone}) — ${sig.reasons.join(", ")}\n` +
+          `Entry $${f1(sig.entry)} · SL $${f1(sig.stopLoss)} · TP $${f1(tp.tp1)}/$${f1(tp.tp2)}/$${f1(tp.tp3)}`;
+      }
+    }
+  } catch (e) { console.error("killzone skipped:", e.message); }
 
   // diff vs last state — only alert on NEW triggers
   const state = loadState();

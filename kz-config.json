@@ -1,0 +1,18 @@
+{
+  "params": {
+    "zones": [
+      "London",
+      "NewYork"
+    ],
+    "requireDisplacement": true,
+    "slMult": 1.5,
+    "tpMult": 3,
+    "horizon": 16,
+    "lookbackSwing": 20
+  },
+  "meta": {
+    "optimizedExpectancyR": 0.111,
+    "trades": 9,
+    "winRatePct": 33.33
+  }
+}

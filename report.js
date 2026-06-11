@@ -117,6 +117,14 @@ function buildMessage(session, r, h1, m15) {
   if (r.patterns.headShoulders) lines.push(`   ⚠️ ${r.patterns.headShoulders.pattern}`);
   if (r.patterns.flag) lines.push(`   🚩 ${r.patterns.flag.pattern}`);
   lines.push("");
+  if (r.killzoneSignal && r.killzoneSignal.active) {
+    const k = r.killzoneSignal;
+    const ic = k.direction === "LONG" ? "🟢" : "🔴";
+    lines.push(`⚡ <b>KILLZONE ${k.direction}</b> (${k.killzone}) ${ic}`);
+    lines.push(`   ${k.reasons.join(" · ")}`);
+    lines.push(`   Entry $${f0(k.entry)} · SL $${f0(k.stopLoss)} · TP $${f0(k.takeProfit.tp1)}/$${f0(k.takeProfit.tp2)}/$${f0(k.takeProfit.tp3)}`);
+    lines.push("");
+  }
   if (sig && sig.direction !== "NEUTRAL") {
     lines.push(`🎯 <b>SETUP ${sig.direction}</b>`);
     if (sig.entryZone) lines.push(`   Entry: $${f0(sig.entryZone[0])}–$${f0(sig.entryZone[1])}`);
