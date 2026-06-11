@@ -60,6 +60,11 @@ function buildMessage(session, r, h1, m15) {
   lines.push("");
   lines.push(`⚖️ <b>HỘI ĐỒNG: ${dirEmoji(c.direction)}</b> (${c.confidence})`);
   lines.push(`   Consensus ${f2(c.consensus)} · Đồng thuận ${Math.round(c.agreement * 100)}%`);
+  if (c.tiers) {
+    const t = c.tiers;
+    lines.push(`   🏛️ Regime ${dirEmoji(t.regime.direction)} ${f2(t.regime.score)} · Setup ${dirEmoji(t.setup.direction)}${t.setup.gated ? "⛔" : ""} · Trigger ${dirEmoji(t.trigger.direction)}${t.trigger.gated ? "⛔" : ""}`);
+    if (c.counterTrend) lines.push(`   ⚠️ Ngược regime → scalp, giảm size`);
+  }
   lines.push("");
   lines.push("📊 <b>Chỉ báo</b>");
   lines.push(`   1D: RSI ${f0(d.rsi)} · MACD ${d.macdHist > 0 ? "bull" : "bear"} · EMA ${d.emaCross} · ADX ${f0(d.adx)} · ST${arrow(d.supertrend?.direction)}`);
@@ -83,8 +88,14 @@ function buildMessage(session, r, h1, m15) {
   if (r.smc && r.smc.entry) {
     const s = r.smc.entry;
     const ic = s.bias === "bullish" ? "🟢" : s.bias === "bearish" ? "🔴" : "⚪";
-    lines.push("🏦 <b>Smart Money (SMC)</b>");
+    lines.push("🏦 <b>Smart Money (SMC + ICT)</b>");
     lines.push(`   ${ic} ${s.bias} · ${s.premiumDiscount}${s.structureEvent ? " · " + s.structureEvent : ""}${s.liquiditySweep ? " · sweep:" + s.liquiditySweep : ""}`);
+    const ict = [];
+    if (s.ote) ict.push(`OTE ${s.ote.type} $${f0(s.ote.zone[0])}–${f0(s.ote.zone[1])}`);
+    if (s.displacement) ict.push(`displacement ${s.displacement.dir}`);
+    if (s.killzone) ict.push(`${s.killzone} KZ`);
+    if (s.smt) ict.push(`SMT ${s.smt.bias} (vs ${s.smt.peer})`);
+    if (ict.length) lines.push(`   ⚡ ICT: ${ict.join(" · ")}`);
     lines.push(`   1D: ${r.smc.daily?.trend || "-"} (${r.smc.daily?.premiumDiscount || "-"})`);
     lines.push("");
   }
