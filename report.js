@@ -183,6 +183,21 @@ function ghSummary(text) {
     ghSummary("❌ **Thiếu Telegram secrets** (CAS_TELEGRAM_TOKEN / CAS_TELEGRAM_CHAT_ID).");
     process.exit(1);
   }
+  // Telegram preflight — confirm which BOT the token is for + detected chats.
+  // Reveals "wrong bot token" / "wrong chat_id" causes of 'chat not found'.
+  try {
+    const tok = cfg.telegramToken;
+    const me = await (await fetch(`https://api.telegram.org/bot${tok}/getMe`, { signal: AbortSignal.timeout(8000) })).json();
+    const up = await (await fetch(`https://api.telegram.org/bot${tok}/getUpdates`, { signal: AbortSignal.timeout(8000) })).json();
+    const chats = [...new Set((up.result || []).map((u) => { const m = u.message || u.edited_message || u.channel_post; return m && m.chat ? `${m.chat.id} (${m.chat.username || m.chat.first_name || m.chat.title})` : null; }).filter(Boolean))];
+    ghSummary(
+      "### Telegram preflight\n" +
+      `- Bot (từ token): ${me.ok ? "@" + me.result.username : "❌ token sai: " + me.description}\n` +
+      `- chat_id đang dùng: \`${cfg.telegramChatId}\`\n` +
+      `- Chats bot thấy (đã /start): ${chats.length ? chats.join(", ") : "(chưa ai nhắn /start cho bot này)"}\n` +
+      (me.ok && me.result.username !== "algox_claude_bot" ? "- ⚠️ **Token KHÔNG phải @algox_claude_bot** — đây là lý do 'chat not found'.\n" : "")
+    );
+  } catch {}
   // Probe which exchanges are reachable from this runner → show on Summary.
   try {
     const ds = require("./lib/datasource");
