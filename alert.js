@@ -39,25 +39,33 @@ async function send(token, chatId, text) {
   const cfg = load();
   if (!cfg.telegramToken || !cfg.telegramChatId) { console.error("No telegram creds"); process.exit(1); }
 
-  // Use the resilient multi-exchange datasource (handles geo-blocks/fallback).
+  // Resilient multi-exchange datasource. Some exchanges lack certain timeframes
+  // (e.g. Kraken has no 6h/12h) → skip a timeframe that fails rather than crash.
   const getTf = async (x, lim = 300) => {
-    const o = await ds.getOHLCV(sym, x, lim);
-    return { highs: o.highs, lows: o.lows, closes: o.closes };
+    try {
+      const o = await ds.getOHLCV(sym, x, lim);
+      return { highs: o.highs, lows: o.lows, closes: o.closes };
+    } catch (e) {
+      console.error(`tf ${x} skipped:`, e.message);
+      return null;
+    }
   };
 
-  // 12h instead of 8h — 8h is Binance-only (OKX/Bybit don't support it).
   const tfs = ["4h", "6h", "12h", "1d"];
-  const data = await Promise.all(tfs.map(t => getTf(t)));
+  const data = await Promise.all(tfs.map((t) => getTf(t)));
   const wk = await getTf("1w", 250);
 
   // current active triggers → { key: detailText }
   const active = {};
   tfs.forEach((tf, i) => {
+    if (!data[i]) return;
     const cel = ind.celasorBottom(data[i].highs, data[i].lows, data[i].closes);
     if (cel && cel.green) active["celasor_" + tf] = `🟢 Celasor GREEN ${tf}: normATR ${f1(cel.normAtr)} & W%R ${f1(cel.williamsR)}`;
   });
-  const sq = ind.bbSqueeze(wk.closes, 20, 2, 100);
-  if (sq && sq.squeeze) active["bb1w_squeeze"] = `🟢 BB 1W SQUEEZE hoàn chỉnh: width ${f1(sq.percentile)}%ile (${sq.narrowingBars} tuần hẹp) → sắp bung`;
+  if (wk) {
+    const sq = ind.bbSqueeze(wk.closes, 20, 2, 100);
+    if (sq && sq.squeeze) active["bb1w_squeeze"] = `🟢 BB 1W SQUEEZE hoàn chỉnh: width ${f1(sq.percentile)}%ile (${sq.narrowingBars} tuần hẹp) → sắp bung`;
+  }
 
   // Coinbase Premium Gap reversal signal (±30)
   const cp = await ds.getCoinbasePremium(sym);

@@ -166,25 +166,27 @@ async function send(token, chatId, text) {
   };
 
   try {
-    const [r, h1, m15, eth, sol, bnb, shib] = await withTimeout(
+    // BTC core must succeed; altcoins are best-effort (skip if exchange lacks the pair).
+    const safe = (p) => p.catch((e) => { console.error("coin skipped:", e.message); return null; });
+    const [r, h1, m15, ...alts] = await withTimeout(
       Promise.all([
         fullAnalysis("BTC", "4h"),
         ltf("1h"),
         ltf("15m"),
-        fullAnalysis("ETH", "4h"),
-        fullAnalysis("SOL", "4h"),
-        fullAnalysis("BNB", "4h"),
-        fullAnalysis("SHIB", "4h"),
+        safe(fullAnalysis("ETH", "4h")),
+        safe(fullAnalysis("SOL", "4h")),
+        safe(fullAnalysis("BNB", "4h")),
+        safe(fullAnalysis("SHIB", "4h")),
       ]),
       240000,
       "data fetch"
     );
     let msg = buildMessage(session, r, h1, m15);
-    msg += "\n\n📈 <b>ALTCOINS</b>\n" +
-      coinSummary("ETH", eth) + "\n" +
-      coinSummary("SOL", sol) + "\n" +
-      coinSummary("BNB", bnb) + "\n" +
-      coinSummary("SHIB", shib);
+    const altNames = ["ETH", "SOL", "BNB", "SHIB"];
+    const altLines = alts
+      .map((a, i) => (a ? coinSummary(altNames[i], a) : null))
+      .filter(Boolean);
+    if (altLines.length) msg += "\n\n📈 <b>ALTCOINS</b>\n" + altLines.join("\n");
     msg += "\n━━━━━━━━━━━━━━━━\n⚠️ <i>Không phải lời khuyên đầu tư. Luôn dùng stop-loss.</i>";
     await send(cfg.telegramToken, cfg.telegramChatId, msg);
     console.log(`[${new Date().toISOString()}] Report sent (${session}).`);
