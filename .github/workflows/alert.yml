@@ -24,7 +24,7 @@ jobs:
       - name: Run alert
         run: node alert.js BTC
         env:
-          CAS_EXCHANGE: okx
+          CAS_EXCHANGE: okx,bybit,kraken,binance
           CAS_TELEGRAM_TOKEN: ${{ secrets.CAS_TELEGRAM_TOKEN }}
           CAS_TELEGRAM_CHAT_ID: ${{ secrets.CAS_TELEGRAM_CHAT_ID }}
       - name: Persist alert state

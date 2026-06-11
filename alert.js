@@ -39,15 +39,14 @@ async function send(token, chatId, text) {
   const cfg = load();
   if (!cfg.telegramToken || !cfg.telegramChatId) { console.error("No telegram creds"); process.exit(1); }
 
-  const exId = (process.env.CAS_EXCHANGE || "binance").toLowerCase();
-  const ex = new ccxt[exId]({ enableRateLimit: true, timeout: 15000 });
-  const pair = sym + "/USDT";
+  // Use the resilient multi-exchange datasource (handles geo-blocks/fallback).
   const getTf = async (x, lim = 300) => {
-    const raw = await ex.fetchOHLCV(pair, x, undefined, lim);
-    return { highs: raw.map(c => c[2]), lows: raw.map(c => c[3]), closes: raw.map(c => c[4]) };
+    const o = await ds.getOHLCV(sym, x, lim);
+    return { highs: o.highs, lows: o.lows, closes: o.closes };
   };
 
-  const tfs = ["4h", "6h", "8h", "1d"];
+  // 12h instead of 8h — 8h is Binance-only (OKX/Bybit don't support it).
+  const tfs = ["4h", "6h", "12h", "1d"];
   const data = await Promise.all(tfs.map(t => getTf(t)));
   const wk = await getTf("1w", 250);
 
