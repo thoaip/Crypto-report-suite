@@ -149,13 +149,27 @@ async function send(token, chatId, text) {
   return j;
 }
 
+// Write a line to the GitHub Actions run Summary page (visible without opening logs).
+function ghSummary(text) {
+  try {
+    if (process.env.GITHUB_STEP_SUMMARY) require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY, text + "\n");
+  } catch {}
+}
+
 (async () => {
   const session = (process.argv[2] || "morning").toLowerCase();
   const cfg = load();
   if (!cfg.telegramToken || !cfg.telegramChatId) {
     console.error("Thiếu telegram_token / telegram_chat_id trong secrets.json");
+    ghSummary("❌ **Thiếu Telegram secrets** (CAS_TELEGRAM_TOKEN / CAS_TELEGRAM_CHAT_ID).");
     process.exit(1);
   }
+  // Probe which exchanges are reachable from this runner → show on Summary.
+  try {
+    const ds = require("./lib/datasource");
+    const probe = await ds.probeExchanges();
+    ghSummary("### Exchange reachability\n" + probe.map((p) => `- ${p.id}: ${p.ok ? "✅ " + p.price : "❌ " + p.err}`).join("\n"));
+  } catch {}
   const withTimeout = (p, ms, label) => {
     let timer;
     const guard = new Promise((_, rej) => {
@@ -193,6 +207,7 @@ async function send(token, chatId, text) {
     process.exit(0); // exit immediately, don't linger on any pending handles
   } catch (e) {
     console.error("Report failed:", e.message);
+    ghSummary(`\n❌ **Report failed:** \`${e.message}\``);
     // best-effort error ping
     try { await send(cfg.telegramToken, cfg.telegramChatId, `⚠️ Báo cáo BTC ${session} lỗi: ${e.message}`); } catch {}
     process.exit(1);
