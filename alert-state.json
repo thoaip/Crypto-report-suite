@@ -1,3 +1,5 @@
 {
-  "BTC": {}
+  "BTC": {
+    "cbprem_bear": true
+  }
 }
