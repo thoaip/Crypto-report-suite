@@ -78,6 +78,7 @@ function buildMessage(session, r, h1, m15) {
   lines.push(`   📉 Funding ${(r.derivatives.fundingRate * 100).toFixed(4)}% · OI ${f0(r.derivatives.openInterest)}`);
   if (r.derivatives.coinbasePremium) lines.push(`   🇺🇸 Coinbase Premium: ${r.derivatives.coinbasePremium.gap > 0 ? "+" : ""}${f0(r.derivatives.coinbasePremium.gap)} ${r.derivatives.coinbasePremium.signal}`);
   if (r.macro) lines.push(`   🔺 BTC.D ${f2(r.macro.btcDominance)}% · Stable.D ${f2(r.macro.stablecoinDominance)}% (${r.macro.mcapChange24h < 0 ? "D↑ áp lực giảm" : "D↓ ủng hộ tăng"})`);
+  if (r.cycle && r.cycle.ma200w) lines.push(`   🌀 Cycle: ${p.last < r.cycle.ma200w ? "DƯỚI" : "trên"} MA200W $${f0(r.cycle.ma200w)} · MA350W $${f0(r.cycle.ma350w)} · Mayer ${f2(r.cycle.mayer)} · MACD-W ${r.cycle.weeklyMacdBear ? "bear🔴" : "bull🟢"} · Vortex ${r.cycle.vortexBull ? "bull🟢" : "bear (cửa sổ mua MỞ)"}`);
   lines.push("");
   const volM = c.members && c.members.find((m) => m.name === "Volume");
   const wy = volM && volM.reasons.find((x) => x.startsWith("Wyckoff:"));
