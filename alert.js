@@ -51,7 +51,7 @@ async function send(token, chatId, text) {
     }
   };
 
-  const tfs = ["4h", "6h", "12h", "1d"];
+  const tfs = ["4h", "6h", "8h", "12h", "1d"]; // 8h = Binance/Bitstamp; exchanges lacking a tf are skipped gracefully
   const data = await Promise.all(tfs.map((t) => getTf(t)));
   const wk = await getTf("1w", 420); // 420 weeks → enough for MA350W
 
