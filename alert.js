@@ -53,7 +53,7 @@ async function send(token, chatId, text) {
 
   const tfs = ["4h", "6h", "12h", "1d"];
   const data = await Promise.all(tfs.map((t) => getTf(t)));
-  const wk = await getTf("1w", 250);
+  const wk = await getTf("1w", 420); // 420 weeks → enough for MA350W
 
   // current active triggers → { key: detailText }
   const active = {};
@@ -72,6 +72,29 @@ async function send(token, chatId, text) {
   if (cp && !cp.error && cp.gap != null) {
     if (cp.gap >= 30) active["cbprem_bull"] = `🟢 Coinbase Premium +${f1(cp.gap)} → tổ chức Mỹ GOM (đảo chiều TĂNG)`;
     else if (cp.gap <= -30) active["cbprem_bear"] = `🔴 Coinbase Premium ${f1(cp.gap)} → XẢ (đảo chiều GIẢM)`;
+  }
+
+  // ---- LONG-TERM CYCLE BUY TRIGGERS (1W) ----
+  if (wk && wk.closes.length >= 350) {
+    const price = wk.closes[wk.closes.length - 1];
+    // 1) Price touches the 1W MA350 — the line that priced the 2022 bear-cycle
+    //    bottom. Fires when price comes within 2% above it (or below).
+    const ma350w = wk.closes.slice(-350).reduce((a, b) => a + b, 0) / 350;
+    if (price <= ma350w * 1.02) {
+      active["cycle_ma350w"] =
+        `🟣 <b>BTC CHẠM 1W MA350 — VÙNG ĐÁY CHU KỲ!</b>\n` +
+        `💰 $${f1(price)} · MA350W $${f1(ma350w)}\n` +
+        `Đường này đã định giá ĐÁY bear cycle 2022 → vùng DCA dài hạn tầng 1.`;
+    }
+    // 2) Vortex 1W bull cross — historically closes the "buy time window"
+    //    and confirms the cycle bottom. Fires within 2 weeks of the cross.
+    const vx = ind.vortex(wk.highs, wk.lows, wk.closes, 14);
+    if (vx && vx.bullish && vx.barsSinceCross != null && vx.barsSinceCross <= 2) {
+      active["vortex1w_bull"] =
+        `🟢 <b>VORTEX 1W BULL CROSS — XÁC NHẬN ĐÁY CHU KỲ!</b>\n` +
+        `💰 $${f1(price)} · VI+ ${vx.viPlus.toFixed(2)} > VI− ${vx.viMinus.toFixed(2)}\n` +
+        `Cửa sổ mua lịch sử ĐÓNG — tín hiệu vào vị thế dài hạn cho bull cycle 3 năm.`;
+    }
   }
 
   // ICT Killzone signal (1h entry, optimized params from kz-config.json)
