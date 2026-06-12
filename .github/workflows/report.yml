@@ -2,8 +2,9 @@ name: BTC Telegram Report
 
 on:
   schedule:
-    - cron: '0 23 * * *'   # 06:00 Vietnam (UTC+7)
-    - cron: '0 11 * * *'   # 18:00 Vietnam
+    - cron: '0 1 * * *'    # 08:00 Vietnam (UTC+7) — morning
+    - cron: '30 6 * * *'   # 13:30 Vietnam — noon
+    - cron: '0 13 * * *'   # 20:00 Vietnam — evening
   workflow_dispatch:        # allow manual run for testing
 
 jobs:
@@ -16,7 +17,7 @@ jobs:
           node-version: '20'
       - run: npm ci
       - name: Send report
-        run: node report.js ${{ github.event.schedule == '0 11 * * *' && 'evening' || 'morning' }}
+        run: node report.js ${{ github.event.schedule == '0 13 * * *' && 'evening' || github.event.schedule == '30 6 * * *' && 'noon' || 'morning' }}
         env:
           CAS_EXCHANGE: kraken,bitstamp,coinbase,kucoin,gateio,okx,bybit,binance
           CAS_TELEGRAM_TOKEN: ${{ secrets.CAS_TELEGRAM_TOKEN }}

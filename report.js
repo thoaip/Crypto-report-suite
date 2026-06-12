@@ -35,8 +35,8 @@ async function ltf(tf) {
 function buildMessage(session, r, h1, m15) {
   const now = new Date();
   const ts = now.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
-  const emoji = session === "morning" ? "🌅" : "🌆";
-  const title = session === "morning" ? "BÁO CÁO SÁNG" : "BÁO CÁO CHIỀU";
+  const emoji = session === "morning" ? "🌅" : session === "noon" ? "🌤️" : "🌆";
+  const title = session === "morning" ? "BÁO CÁO SÁNG" : session === "noon" ? "BÁO CÁO TRƯA" : "BÁO CÁO CHIỀU";
   const p = r.price;
   const c = r.council;
   const e = r.entry;
