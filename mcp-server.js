@@ -24,6 +24,7 @@ const { tuneWeights } = require("./lib/tuner");
 const council = require("./lib/council");
 const { renderEquityCurve } = require("./lib/chart");
 const montecarlo = require("./lib/montecarlo");
+const mlmod = require("./lib/ml");
 
 const json = (obj) => ({
   content: [{ type: "text", text: JSON.stringify(obj, null, 2) }],
@@ -249,6 +250,37 @@ class CryptoAnalyticsSuite {
           },
         },
         {
+          name: "ml_feature_importance",
+          description:
+            "🧠 XGBoost ĐÁNH GIÁ 23 tham số tín hiệu: huấn luyện Gradient Boosted Trees (có colsample) trên phiếu 12 thành viên hội đồng + chỉ báo, xếp hạng tín hiệu nào ĐÁNG tin nhất khi dự báo. Hỗ trợ hội đồng biết trọng số nào quan trọng — KHÔNG phải voter. Technicals-only (thành viên chỉ-live vắng trong lịch sử).",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: SYMBOL_PROP,
+              timeframe: TF_PROP,
+              horizon: { type: "number", description: "Số nến tương lai (mặc định 8-10)" },
+              limit: { type: "number", description: "Số nến lịch sử (mặc định 1500)" },
+            },
+            required: ["symbol"],
+          },
+        },
+        {
+          name: "ml_advisory",
+          description:
+            "🤝 XGBoost CỐ VẤN hội đồng (không có quyền vote): so khớp dự báo ML với hướng hội đồng hiện tại → ĐỒNG THUẬN (tăng tin cậy) hay NGƯỢC (cảnh báo). Kèm backtest OOS chứng minh lệnh 'ML đồng ý' chất lượng cao hơn. Đặt backtest=true để xem kiểm chứng out-of-sample.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: SYMBOL_PROP,
+              timeframe: TF_PROP,
+              horizon: { type: "number", description: "Số nến tương lai (mặc định 8-10)" },
+              limit: { type: "number", description: "Số nến lịch sử (mặc định 1500)" },
+              backtest: { type: "boolean", description: "true = chạy kiểm chứng OOS thay vì cố vấn live (mặc định false)" },
+            },
+            required: ["symbol"],
+          },
+        },
+        {
           name: "detect_patterns",
           description:
             "Nhận diện mô hình NẾN (Hammer, Engulfing, Morning/Evening Star, Three Soldiers/Crows, Doji...) và mô hình GIÁ (Tam giác tăng/giảm/cân, Nêm tăng/giảm, Double Top/Bottom) trên khung dài (mặc định 1W + 1D). Chính xác cao, lọc nhiễu.",
@@ -390,6 +422,14 @@ class CryptoAnalyticsSuite {
           return json(await montecarlo.optimizeRisk(args.symbol, {
             timeframe: args.timeframe || "1d", horizon: args.horizon || 10, limit: args.limit || 1000,
             maxRuinPct: args.max_ruin_pct != null ? args.max_ruin_pct : 8, apply: args.apply === true,
+          }));
+        case "ml_feature_importance":
+          return json(await mlmod.mlFeatureImportance(args.symbol, {
+            timeframe: args.timeframe || "1h", horizon: args.horizon || 8, limit: args.limit || 1500,
+          }));
+        case "ml_advisory":
+          return json(await (args.backtest === true ? mlmod.backtestAdvisory : mlmod.advisory)(args.symbol, {
+            timeframe: args.timeframe || "1h", horizon: args.horizon || 8, limit: args.limit || 1500,
           }));
         case "detect_patterns":
           return await this.patterns(args);
