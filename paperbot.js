@@ -25,12 +25,20 @@ const bot = require("./lib/bot");
     } else if (cmd === "okxtest") {
       const ex = require("./lib/exchange");
       console.log(JSON.stringify(await ex.okxTest(), null, 2));
+    } else if (cmd === "backtest") {
+      const bt = require("./lib/botbacktest");
+      console.log(JSON.stringify(await bt.backtestBot(a || "BTC", { timeframe: b || "4h" }), null, 2));
+    } else if (cmd === "optimize") {
+      const bt = require("./lib/botbacktest");
+      console.log(JSON.stringify(await bt.optimizeBot(a || "BTC", { apply: true, minTrades: 40, leverages: [0.5, 1], now: new Date().toISOString() }), null, 2));
     } else { // step
       const symbol = a || "BTC";
-      const entryTf = b || "15m";
-      const modeArg = (c || "").toLowerCase();
-      const mode = modeArg.startsWith("okx") || process.env.CAS_BOT_MODE === "okx-demo" ? "okx-demo" : "paper";
-      const r = await bot.step(symbol, { entryTf, mode });
+      const modeArg = (b || "").toLowerCase() === "okx" ? b : (c || "");
+      const tfArg = (b && b.toLowerCase() !== "okx") ? b : null; // BTC [tf] [mode]
+      const mode = String(modeArg).toLowerCase().startsWith("okx") || process.env.CAS_BOT_MODE === "okx-demo" ? "okx-demo" : "paper";
+      const stepOpts = { mode };
+      if (tfArg) stepOpts.entryTf = tfArg; // else use bot-config.json
+      const r = await bot.step(symbol, stepOpts);
       console.log(`[${r.now}] ${r.mode} ${r.symbol} $${r.price}${r.equity != null ? " · equity " + r.equity : ""}`);
       (r.events || []).forEach((e) => console.log("  • " + e));
       if (r.position) console.log(`  position: ${r.position.side} entry ${r.position.entry} SL ${r.position.sl || "-"} TP ${r.position.tp || "-"}`);

@@ -1,0 +1,17 @@
+{
+  "symbol": "BTC",
+  "entryTf": "4h",
+  "tpKey": "tp1",
+  "confGate": "medHigh",
+  "maxHold": 12,
+  "leverage": 1,
+  "meta": {
+    "compoundedReturnPct": 44.6,
+    "winRatePct": 62,
+    "maxDrawdownPct": 24.3,
+    "trades": 79,
+    "expectancyPct": 0.523,
+    "maxDDcap": 30,
+    "optimizedAt": "2026-06-13T18:33:28.691Z"
+  }
+}
