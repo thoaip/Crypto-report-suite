@@ -3,3 +3,5 @@ secrets.json
 charts/
 *.log
 tmp-*.js
+paper-state.json
+.commitmsg.tmp
