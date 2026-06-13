@@ -23,6 +23,7 @@ const { backtestCouncil } = require("./lib/backtest");
 const { tuneWeights } = require("./lib/tuner");
 const council = require("./lib/council");
 const { renderEquityCurve } = require("./lib/chart");
+const montecarlo = require("./lib/montecarlo");
 
 const json = (obj) => ({
   content: [{ type: "text", text: JSON.stringify(obj, null, 2) }],
@@ -216,6 +217,38 @@ class CryptoAnalyticsSuite {
           },
         },
         {
+          name: "monte_carlo",
+          description:
+            "🎲 MONTE CARLO rủi ro: bootstrap 5000 đường vốn từ chuỗi lệnh hội đồng quá khứ → P(lãi), risk-of-ruin (P drawdown≥50%), phân phối lợi nhuận (p5-p95), drawdown, Kelly. So sánh vào-mọi-lệnh vs chỉ-medium+high. Technicals-only.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: SYMBOL_PROP,
+              timeframe: TF_PROP,
+              horizon: { type: "number", description: "Số nến tương lai (mặc định 10)" },
+              limit: { type: "number", description: "Số nến lịch sử (mặc định 1000)" },
+            },
+            required: ["symbol"],
+          },
+        },
+        {
+          name: "optimize_risk",
+          description:
+            "🎯 TỰ TỐI ƯU rủi ro (Monte Carlo): quét bộ lọc độ tin cậy × đòn bẩy, chọn config có MEDIAN return cao nhất mà risk-of-ruin ≤ cap. apply=true ghi mc-config.json. Khuyến nghị filter + sizing tối ưu cho live.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: SYMBOL_PROP,
+              timeframe: TF_PROP,
+              horizon: { type: "number" },
+              limit: { type: "number" },
+              max_ruin_pct: { type: "number", description: "Cap risk-of-ruin (%), mặc định 8" },
+              apply: { type: "boolean", description: "true = ghi mc-config.json (mặc định false)" },
+            },
+            required: ["symbol"],
+          },
+        },
+        {
           name: "detect_patterns",
           description:
             "Nhận diện mô hình NẾN (Hammer, Engulfing, Morning/Evening Star, Three Soldiers/Crows, Doji...) và mô hình GIÁ (Tam giác tăng/giảm/cân, Nêm tăng/giảm, Double Top/Bottom) trên khung dài (mặc định 1W + 1D). Chính xác cao, lọc nhiễu.",
@@ -349,6 +382,15 @@ class CryptoAnalyticsSuite {
               costPct: args.cost_pct != null ? args.cost_pct : 0.15,
             })
           );
+        case "monte_carlo":
+          return json(await montecarlo.monteCarloCouncil(args.symbol, {
+            timeframe: args.timeframe || "1d", horizon: args.horizon || 10, limit: args.limit || 1000,
+          }));
+        case "optimize_risk":
+          return json(await montecarlo.optimizeRisk(args.symbol, {
+            timeframe: args.timeframe || "1d", horizon: args.horizon || 10, limit: args.limit || 1000,
+            maxRuinPct: args.max_ruin_pct != null ? args.max_ruin_pct : 8, apply: args.apply === true,
+          }));
         case "detect_patterns":
           return await this.patterns(args);
         case "plot_equity_curve":

@@ -1,6 +1,6 @@
 {
   "name": "crypto-analytics-suite",
-  "version": "2.17.0",
+  "version": "2.17.1",
   "description": "Unified Crypto Analytics Suite - Combining 50+ Indicators, 6 Crypto Skills, 28 Trading Skills, 4 Investment Analysis Skills into one MCP Server for BTC & Crypto Trading",
   "main": "mcp-server.js",
   "type": "commonjs",
