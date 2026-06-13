@@ -32,7 +32,7 @@ async function ltf(tf) {
   return ix;
 }
 
-function buildMessage(session, r, h1, m15) {
+function buildMessage(session, r, h1, m15, mlAdv) {
   const now = new Date();
   const ts = now.toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
   const emoji = session === "morning" ? "🌅" : session === "noon" ? "🌤️" : "🌆";
@@ -72,6 +72,13 @@ function buildMessage(session, r, h1, m15) {
       lines.push(`   🎲 Risk-MC: ${pass ? "✅ ĐỦ điều kiện vào (size " + mcCfg.leverage + "×)" : "⛔ confidence thấp → KHÔNG vào (chờ ≥ medium)"} · ruin ${mcCfg.meta.riskOfRuinPct}%`);
     }
   } catch {}
+  if (mlAdv && mlAdv.mlDirection) {
+    const cd = c.direction, md = mlAdv.mlDirection;
+    const ag = md === "NEUTRAL" || cd === "NEUTRAL" ? "⚪ trung tính"
+      : md === cd ? "🟢 ĐỒNG THUẬN → tăng tin cậy"
+      : "🔴 NGƯỢC → thận trọng, giảm size";
+    lines.push(`   🤝 ML cố vấn (XGBoost): ${md} ${mlAdv.mlProbUpPct}%↑ vs HĐ ${cd} → ${ag}`);
+  }
   lines.push("");
   lines.push("📊 <b>Chỉ báo</b>");
   lines.push(`   1D: RSI ${f0(d.rsi)} · MACD ${d.macdHist > 0 ? "bull" : "bear"} · EMA ${d.emaCross} · ADX ${f0(d.adx)} · ST${arrow(d.supertrend?.direction)}`);
@@ -224,11 +231,12 @@ function ghSummary(text) {
   try {
     // BTC core must succeed; altcoins are best-effort (skip if exchange lacks the pair).
     const safe = (p) => p.catch((e) => { console.error("coin skipped:", e.message); return null; });
-    const [r, h1, m15, ...alts] = await withTimeout(
+    const [r, h1, m15, mlAdv, ...alts] = await withTimeout(
       Promise.all([
         fullAnalysis("BTC", "4h"),
         ltf("1h"),
         ltf("15m"),
+        safe(require("./lib/ml").advisory("BTC", { timeframe: "1h", limit: 1000, horizon: 8 })),
         safe(fullAnalysis("ETH", "4h")),
         safe(fullAnalysis("SOL", "4h")),
         safe(fullAnalysis("BNB", "4h")),
@@ -237,13 +245,18 @@ function ghSummary(text) {
       240000,
       "data fetch"
     );
-    let msg = buildMessage(session, r, h1, m15);
+    let msg = buildMessage(session, r, h1, m15, mlAdv && !mlAdv.error ? mlAdv : null);
     const altNames = ["ETH", "SOL", "BNB", "SHIB"];
     const altLines = alts
       .map((a, i) => (a ? coinSummary(altNames[i], a) : null))
       .filter(Boolean);
     if (altLines.length) msg += "\n\n📈 <b>ALTCOINS</b>\n" + altLines.join("\n");
     msg += "\n━━━━━━━━━━━━━━━━\n⚠️ <i>Không phải lời khuyên đầu tư. Luôn dùng stop-loss.</i>";
+    if (process.env.CAS_DRY_RUN) {
+      console.log(msg.replace(/<[^>]+>/g, ""));
+      console.log(`\n[DRY_RUN] Report NOT sent (${session}).`);
+      process.exit(0);
+    }
     await send(cfg.telegramToken, cfg.telegramChatId, msg);
     console.log(`[${new Date().toISOString()}] Report sent (${session}).`);
     process.exit(0); // exit immediately, don't linger on any pending handles
