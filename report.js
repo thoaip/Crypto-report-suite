@@ -65,6 +65,13 @@ function buildMessage(session, r, h1, m15) {
     lines.push(`   🏛️ Regime ${dirEmoji(t.regime.direction)} ${f2(t.regime.score)} · Setup ${dirEmoji(t.setup.direction)}${t.setup.gated ? "⛔" : ""} · Trigger ${dirEmoji(t.trigger.direction)}${t.trigger.gated ? "⛔" : ""}`);
     if (c.counterTrend) lines.push(`   ⚠️ Ngược regime → scalp, giảm size`);
   }
+  try {
+    const mcCfg = require("./lib/montecarlo").loadConfig();
+    if (mcCfg && mcCfg.meta) {
+      const pass = c.confidence === "high" || (mcCfg.filter === "medHigh" && c.confidence === "medium");
+      lines.push(`   🎲 Risk-MC: ${pass ? "✅ ĐỦ điều kiện vào (size " + mcCfg.leverage + "×)" : "⛔ confidence thấp → KHÔNG vào (chờ ≥ medium)"} · ruin ${mcCfg.meta.riskOfRuinPct}%`);
+    }
+  } catch {}
   lines.push("");
   lines.push("📊 <b>Chỉ báo</b>");
   lines.push(`   1D: RSI ${f0(d.rsi)} · MACD ${d.macdHist > 0 ? "bull" : "bear"} · EMA ${d.emaCross} · ADX ${f0(d.adx)} · ST${arrow(d.supertrend?.direction)}`);

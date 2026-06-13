@@ -1,0 +1,12 @@
+{
+  "symbol": "BTC",
+  "filter": "medHigh",
+  "leverage": 0.5,
+  "meta": {
+    "medianReturnPct": 12.81,
+    "riskOfRuinPct": 0.08,
+    "kelly": 0.093,
+    "maxRuinCapPct": 8,
+    "optimizedAt": "unknown"
+  }
+}

@@ -26,10 +26,16 @@ jobs:
           CAS_EXCHANGE: kraken,bitstamp,coinbase,kucoin,gateio,okx,bybit,binance
           CAS_TELEGRAM_TOKEN: ${{ secrets.CAS_TELEGRAM_TOKEN }}
           CAS_TELEGRAM_CHAT_ID: ${{ secrets.CAS_TELEGRAM_CHAT_ID }}
+      - name: Monte Carlo risk self-optimization
+        run: node mcoptimize.js BTC 1d
+        env:
+          CAS_EXCHANGE: kraken,bitstamp,coinbase,kucoin,gateio,okx,bybit,binance
+          CAS_TELEGRAM_TOKEN: ${{ secrets.CAS_TELEGRAM_TOKEN }}
+          CAS_TELEGRAM_CHAT_ID: ${{ secrets.CAS_TELEGRAM_CHAT_ID }}
       - name: Persist optimized params
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add kz-config.json 2>/dev/null || true
-          git commit -m "chore: re-optimize killzone params [skip ci]" || echo "no change"
+          git add kz-config.json mc-config.json 2>/dev/null || true
+          git commit -m "chore: re-optimize killzone + Monte Carlo risk params [skip ci]" || echo "no change"
           git push || echo "nothing to push"
