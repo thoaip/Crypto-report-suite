@@ -4,4 +4,5 @@ charts/
 *.log
 tmp-*.js
 paper-state.json
+levelwatch-state.json
 .commitmsg.tmp
